@@ -33,6 +33,7 @@ pipeline{
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerCreds', passwordVariable: 'dockerCredsPassword', usernameVariable: 'dockerCredsUser')]){
                     sh "docker login -u ${env.dockerCredsUser} -p ${env.dockerCredsPassword}"
+                    sh "docker tag udacity-capstone tanmaygadgil/udacity-capstone"
                     sh "docker push tanmaygadgil/udacity-capstone"
                 }
             }
