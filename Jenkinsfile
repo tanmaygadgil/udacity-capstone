@@ -21,9 +21,9 @@ pipeline{
         }
         stage('Upload Docker') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerCreds', passwordVariable: 'dockerCredsPassword', usernameVariable: 'dockerCredsbUser')]){
-                    sh "docker login -u ${env.dockerCredsbUser} -p ${env.dockerCredsPassword}"
-                    sh "docker push ${docker_hub}"
+                withCredentials([usernamePassword(credentialsId: 'dockerCreds', passwordVariable: 'dockerCredsPassword', usernameVariable: 'dockerCredsUser')]){
+                    sh "docker login -u ${env.dockerCredsUser} -p ${env.dockerCredsPassword}"
+                    sh "docker push tanmaygadgil/udacity-capstone"
                 }
             }
         }
