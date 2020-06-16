@@ -4,9 +4,10 @@ pipeline{
     stages{
         stage('Linting') {
             steps {
-                sh 
-                ''' make install
-                    make lint'''
+                sh ''' 
+                make install
+                make lint
+                '''
             }
         }
     }
