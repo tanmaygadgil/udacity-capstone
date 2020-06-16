@@ -6,6 +6,7 @@ pipeline{
         stage('Linting') {
             steps {
                 sh ''' 
+                echo $PATH
                 source  ~/.devops/bin/activate
                 make install
                 make lint
