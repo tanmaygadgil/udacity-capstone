@@ -3,7 +3,9 @@ pipeline{
     stages{
         stage('Lint HTML') {
             steps {
-                sh 'make lint'
+                sh 
+                '''make install
+                make lint'''
             }
         }
             
