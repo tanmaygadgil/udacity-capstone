@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pipeline{
     agent any
     stages{
@@ -9,6 +10,5 @@ pipeline{
             }
         }
             
-    }
-    
+
 }
