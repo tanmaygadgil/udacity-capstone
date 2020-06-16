@@ -5,8 +5,7 @@ pipeline{
         stage('setup') {
             steps {
                 sh ''' 
-                sh PATH = $PATH:/anaconda3/bin:/anaconda3/bin:/Users/tgadgil001/anaconda3/bin:/anaconda3/bin:/anaconda3/bin:/anaconda3/bin:/Users/tgadgil001/Downloads/google-cloud-sdk/bin:/anaconda3/bin:/anaconda3/bin:/Users/tgadgil001/anaconda3/bin:/Library/Frameworks/Python.framework/Versions/3.5/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-
+                echo $PATH
                 which python
                 docker -v
                 '''
