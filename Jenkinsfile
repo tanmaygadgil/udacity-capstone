@@ -9,6 +9,7 @@ pipeline{
                     make lint'''
             }
         }
+    }
             
 
 }
