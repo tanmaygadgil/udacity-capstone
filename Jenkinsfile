@@ -2,7 +2,7 @@
 pipeline{
     agent any
     stages{
-        def docker_hub = 'tanmaygadgil/udacity-capstone'
+        
         stage('Linting') {
             steps {
                 sh ''' 
