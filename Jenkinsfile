@@ -14,6 +14,7 @@ pipeline{
         }
         stage('Build Dcoker') {
             steps {
+                sh 'docker -v'
                 sh ''' 
                 ./run_docker.sh
                 '''
