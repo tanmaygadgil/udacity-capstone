@@ -1,0 +1,144 @@
+Parameters:
+  EnvironmentName:
+          Description: An environment name that will be prefixed to resource names
+          Type: String
+
+  VpcCIDR: 
+      Description: Please enter the IP range (CIDR notation) for this VPC
+      Type: String
+      Default: 10.0.0.0/16
+
+  Subnet1CIDR:
+      Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+      Type: String
+      Default: 10.0.0.0/24
+
+  Subnet2CIDR:
+      Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+      Type: String
+      Default: 10.0.1.0/24
+
+Resources: 
+ # Defining VPC With the EnvironmentName as the title and CIDR block
+  VPC: 
+      Type: AWS::EC2::VPC
+      Properties:
+          CidrBlock: !Ref VpcCIDR
+          EnableDnsHostnames: true
+          Tags: 
+              - Key: Name 
+                Value: !Ref EnvironmentName
+
+  #------------------------Internet Gateway------------------------#
+  # Writing an internet gateway to provide internet access to the VPC
+  InternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+          Tags:
+              - Key: Name
+                Value: !Ref EnvironmentName
+  # Attaching the Internet gateway to the VPC
+  InternetGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+          InternetGatewayId: !Ref InternetGateway
+          VpcId: !Ref VPC
+  # Defining The first public subnet 
+  # Selecting the first availibility zone
+  # Assigning CIDR block as Param: PublicSubnet1CIDR   
+  # Linking with Current VPC
+  Subnet1: 
+      Type: AWS::EC2::Subnet
+      Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: !Select [ 0, !GetAZs '' ]
+          CidrBlock: !Ref Subnet1CIDR
+          MapPublicIpOnLaunch: true
+          Tags: 
+              - Key: Name 
+                Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+              
+  # Defining The second public subnet 
+  # Selecting the second availibility zone
+  # Assigning CIDR block as Param: PublicSubnet2CIDR 
+  # Linking with Current VPC
+  Subnet2: 
+      Type: AWS::EC2::Subnet
+      Properties:
+          VpcId: !Ref VPC
+          AvailabilityZone: !Select [ 1, !GetAZs '' ]
+          CidrBlock: !Ref Subnet2CIDR
+          MapPublicIpOnLaunch: true
+          Tags: 
+              - Key: Name 
+                Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+  
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Sub ${EnvironmentName} Routes 
+
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref RouteTable
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref RouteTable
+  
+  DefaultSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Default security group for EKS.
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 1025
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 180.151.143.90/32
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 1025
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  VpcId:
+    Description: The VPC id.
+    Value: !Ref VPC
+    Export: 
+        Name: !Sub ${EnvironmentName}-VPCID
+  SubnetIds:
+    Description: The subnet ids.
+    Value: !Join [ ",", [ !Ref Subnet1, !Ref Subnet2] ]
+    Export: 
+        Name: !Sub ${EnvironmentName}-Subnets
+  SecurityGroup:
+    Description: Cluster security group.
+    Value: !Ref DefaultSecurityGroup
+    Export: 
+        Name: !Sub ${EnvironmentName}-Sec-Group

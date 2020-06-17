@@ -1,0 +1,135 @@
+Description: >
+    IAC code to deploy nodes
+Parameters:
+  EnvironmentName:
+    Description: An Environment name that will be prefixed to resources
+    Type: String
+  SshKey:
+    Description: The EC2 Key Pair to allow SSH access to the instances
+    Type: AWS::EC2::KeyPair::KeyName
+  DesiredInstances:
+    Description: How many instances should be created.
+    Type: Number
+    Default: 3
+  ClusterName:
+    Description: The cluster name provided when the cluster was created. If it is incorrect, nodes will not be able to join the cluster.
+    Type: String
+  
+Resources:
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref InstanceRole
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+  NodesSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for the nodes.
+      VpcId:
+        Fn::ImportValue: !Sub "${EnvironmentName}-VPCID"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+    
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+        
+      Tags:
+      - Key: 
+            !Sub 
+                - "kubernetes.io/cluster/${ClusterName}"
+                - EksId: !Ref ClusterName
+        Value: 'owned'
+  NodesAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      DesiredCapacity: !Sub ${DesiredInstances}
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MinSize: 1
+      MaxSize: 4
+      VPCZoneIdentifier:
+        Fn::Split:
+            - ","
+            - Fn::ImportValue:
+                Fn::Sub: ${EnvironmentName}-Subnets
+      Tags:
+      - Key: Name
+        Value: 
+            !Sub 
+                - "${ClusterName}-Nodes"
+                - EksId: !Ref ClusterName
+        PropagateAtLaunch: 'true'
+      - Key: 
+            !Sub 
+                - "kubernetes.io/cluster/${ClusterName}"
+                - EksId: !Ref ClusterName
+        Value: 'owned'
+        PropagateAtLaunch: 'true'
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MaxBatchSize: '1'
+        MinInstancesInService: 3
+        PauseTime: 'PT5M'
+  LaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      AssociatePublicIpAddress: 'true'
+      IamInstanceProfile: !Ref InstanceProfile
+      ImageId: ami-0f54a2f7d2e9c88b3
+      InstanceType: t2.micro
+      KeyName: !Ref SshKey
+      SecurityGroups:
+      - !Ref NodesSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp2
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64:
+          !Sub 
+            - |
+                #!/bin/bash
+                set -o xtrace
+                /etc/eks/bootstrap.sh ${ClusterName}
+                /opt/aws/bin/cfn-signal --exit-code $? \
+                         --stack  ${AWS::StackName} \
+                         --resource NodesAutoScalingGroup  \
+                         --region ${AWS::Region}
+            - EksId: !Ref ClusterName
+Outputs:
+  InstanceRole:
+    Description: The node instance role
+    Value: !GetAtt InstanceRole.Arn
+    Export: 
+      Name: !Sub ${EnvironmentName}-IR
+  NodesSecurityGroup:
+    Description: The security group for the nodes.
+    Value: !Ref NodesSecurityGroup
+    Export:
+      Name: !Sub ${EnvironmentName}-NSG
+

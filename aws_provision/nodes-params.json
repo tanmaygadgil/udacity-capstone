@@ -1,0 +1,18 @@
+[
+    {
+        "ParameterKey": "EnvironmentName",
+        "ParameterValue": "TanmayUdacityCapstone"
+    },
+    {
+        "ParameterKey": "SshKey",
+        "ParameterValue": "eks-ec2"
+    },
+    {
+        "ParameterKey": "DesiredInstances",
+        "ParameterValue": "3"
+    },
+    {
+        "ParameterKey": "ClusterName",
+        "ParameterValue": "udacity-capstone-cluster"
+    }
+]

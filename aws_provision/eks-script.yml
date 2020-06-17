@@ -1,0 +1,29 @@
+Description: >
+    Using this IaC script to create the EKS cluster
+
+Parameters:
+  EnvironmentName:
+    Description: An Environment name that will be prefixed to resources
+    Type: String
+
+Resources:
+  CapstoneEKS:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Version: '1.16'
+      RoleArn: arn:aws:iam::952330169748:role/eks-roleaws
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+        - Fn::ImportValue:
+            !Sub "${EnvironmentName}-Sec-Group"
+        SubnetIds:
+            Fn::Split:
+                - ","
+                - Fn::ImportValue:
+                      Fn::Sub: ${EnvironmentName}-Subnets
+Outputs:
+  EksId:
+    Description: The EKS ID
+    Value: !Ref CapstoneEKS
+    Export: 
+        Name: !Sub ${EnvironmentName}-EKS

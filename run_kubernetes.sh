@@ -5,7 +5,7 @@
 # Step 1:
 # This is your Docker ID/path
 # dockerpath=<>
-dockerpath=tanmaygadgil/udacity-project-4:v2
+dockerpath=tanmaygadgil/udacity-project-4:latest
 # Step 2
 # Run the Docker Hub container with kubernetes
 kubectl run udacity-project-3 --generator=deployment/apps.v1 --image=$dockerpath --port=80
