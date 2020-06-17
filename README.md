@@ -13,7 +13,7 @@ This project attempts to deploy the house prices predictor app from the Microser
   - Create the necessary worker nodes and associate them with the cluster
   - A deployment and service YML file 
   
-- **base** : The base folder contains all of the script to build the dockerized app and a redundant kubernetes script (Not used here)
+- **base** : The base folder contains all of the scripts to build the dockerized app and a redundant kubernetes script (Not used here)
 
 - **Jenkinsfile** : The Jenkinsfile has the following stages
   1. Setup
