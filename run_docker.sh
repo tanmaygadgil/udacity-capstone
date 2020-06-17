@@ -12,4 +12,3 @@ docker image ls
 
 # Step 3: 
 # Run flask app
-docker run -it -d -p 8000:80 udacity-capstone
